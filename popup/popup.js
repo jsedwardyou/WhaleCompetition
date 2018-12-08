@@ -1,18 +1,22 @@
+//------------------------------------------------------------variables
+var clear = document.getElementById("clear_list");
+var start = document.getElementById('start');
+var port;
+var labels = [];
+var chart_data = [];
+
 initialize();
 
-//Clear button
-var clear = document.getElementById("clear_list");
-clear.onclick = function(){
-    clear_list();
-};
 
-//Storage update
+//------------------------------------------------------------whale
 whale.storage.onChanged.addListener(function(changes){
     var url_list = document.getElementById('url_list');
+
+    //---------------------------Add new url to the list
     for(key in changes){
         if(changes[key].newValue){
             create_url_li(changes[key].newValue, url_list);
-            port.postMessage(changes[key].newValue + " true");
+            port.postMessage("warning " + changes[key].newValue + " true");
         }
     }
 });
@@ -20,30 +24,55 @@ whale.storage.onChanged.addListener(function(changes){
 whale.runtime.onMessage.addListener(
     function(request,sender,sendResponse){
         var messages = request.msg.split(" ");
-        if(request.msg == 'clear'){
-            clear_list();
-        }
-        else if(messages[0] == "chart"){
-            for(var i = 0; i < labels.length; i++){
-                if(messages[2] == labels[i]){
-                    chart_data[i] = Number(messages[3]);
-                    draw_chart();
-                    return;
+        console.log(messages);
+        switch(messages[0]){
+            case 'start':
+                start.checked = true;
+                start.setAttribute('checked', true);
+            break;
+            case 'stop':
+                start.checked = false;
+                start.setAttribute('checked', false);
+            break;
+            case 'clear':
+                clear_list();
+            break;
+
+            case 'chart':
+                for(var i = 0; i < labels.length; i++){
+                    if(messages[2] == labels[i]){
+                        chart_data[i] = Number(messages[3]);
+                        draw_chart();
+                        return;
+                    }
                 }
-            }
-            labels.push(messages[2]);
-            chart_data.push(Number(messages[3]));
-            draw_chart();
-            console.log(labels);
-            console.log(chart_data);
-        }
-        else{
-            handle_checkbox_message(request.msg);
+                labels.push(messages[2]);
+                chart_data.push(Number(messages[3]));
+                draw_chart();
+            break;
+
+            case 'checkbox':
+                handle_checkbox_message(messages);
+            break;
         }
     }
 );
 
-//Send info to background.js
+//-------------------------------------------------------------button
+clear.onclick = function(){
+    clear_list();
+};
+
+start.onchange = function(){
+    if(start.checked == true){
+        port.postMessage("start");
+    }
+    else{
+        port.postMessage("stop");
+    }
+};
+
+//------------------------------------------------------------function
 function checkbox_onChange(button){
     var message_to_send = "";
     if(button.checked == true){
@@ -54,23 +83,16 @@ function checkbox_onChange(button){
     port.postMessage(message_to_send);
 }
 
-var port;
 function initialize(){
-    var clear_button = document.createElement('BUTTON');
-    var t = document.createTextNode("Clear");
-    clear_button.id = "clear_list";
-    clear_button.appendChild(t);
-    document.body.appendChild(clear_button);
-
-    Display_URL();
-
+    console.log(start.checked);
+    initialize_URL();
     //Setup port
     port = chrome.extension.connect({
         name: 'background'
     });
 }
 
-function Display_URL(){
+function initialize_URL(){
     var url_list = document.getElementById('url_list');
 
     //Check if url_list already has elements
@@ -79,21 +101,9 @@ function Display_URL(){
     whale.storage.sync.get(null, function(storage_urls){
         var allKeys = Object.keys(storage_urls);
         allKeys.forEach(function(entry){
-            var has_url = false;
-            var storage_url = storage_urls[entry];
-
-            for (var i = 0; i < urls.length; i++){
-                if(urls[i] == storage_url){
-                    has_url = true;
-                }
-            }
-
-            //If url_list does not have urls from storage, add each url to the list
-            if(!has_url){
-                create_url_li(storage_url, url_list);
-                port.postMessage(storage_url + " true");
-            }
-
+            var url = storage_urls[entry];
+            create_url_li(url, url_list);
+            port.postMessage("warning " + url + " true");
         });
     });
 }
@@ -103,40 +113,23 @@ function create_url_li(url, url_list){
   var textnode = document.createTextNode(url);
 
   //Create Check Button
-  var check_button = document.createElement("input");
-  check_button.type = 'checkbox';
-  check_button.id = url;
-  check_button.checked = true;
-  check_button.name = url;
-  check_button.onchange = function(){
-    checkbox_onChange(check_button);
-  };
+  var warning_box = create_warning_box(url);
+  var blocking_box = create_block_box(url);
 
   //Add new Elements to the url_list
   node.appendChild(textnode);
-  node.appendChild(check_button);
+  node.appendChild(warning_box);
+  node.appendChild(blocking_box);
   url_list.appendChild(node);
 }
 
-function clear_list(){
-    //Clear Storage
-    whale.storage.sync.clear();
-
-    //Clear List
-    var url_list = document.getElementById("url_list");
-    while(url_list.firstChild){
-        url_list.removeChild(url_list.firstChild);
-    }
-}
-
-function handle_checkbox_message(message){
-    messages = message.split(" ");
+function handle_checkbox_message(messages){
     var url_list = document.getElementById('url_list');
-    if(messages[1] == 'true'){
-        update_checkbox(messages[0], url_list, true);
+    if(messages[2] == 'true'){
+        update_checkbox(messages[1], url_list, true);
     }
-    else if(messages[1] == 'false'){
-        update_checkbox(messages[0], url_list, false);
+    else if(messages[2] == 'false'){
+        update_checkbox(messages[1], url_list, false);
     }
 }
 
@@ -157,8 +150,6 @@ function update_checkbox(url, url_list, bool){
     checkbox.setAttribute('checked', checkbox.checked);
 }
 
-var labels = [];
-var chart_data = [];
 function draw_chart(){
     new Chart(document.getElementById("pie-chart"), {
         type: 'pie',
@@ -177,5 +168,46 @@ function draw_chart(){
           }
         }
     });
+}
+
+function create_clear(){
+    var clear_button = document.createElement('BUTTON');
+    var t = document.createTextNode("Clear");
+    clear_button.id = "clear_list";
+    clear_button.appendChild(t);
+    document.body.appendChild(clear_button);
+}
+
+function create_warning_box(url){
+  var warning_button = document.createElement("input");
+  warning_button.type = 'checkbox';
+  warning_button.id = "warning " + url;
+  warning_button.checked = true;
+  warning_button.onchange = function(){
+    checkbox_onChange(warning_button);
+  };
+  return warning_button;
+}
+
+function create_block_box(url){
+  var blocking_button = document.createElement("input");
+  blocking_button.type = 'checkbox';
+  blocking_button.id = "blocking " + url;
+  blocking_button.checked = false;
+  blocking_button.onchange = function(){
+    checkbox_onChange(blocking_button);
+  }
+  return blocking_button;
+}
+
+function clear_list(){
+    //Clear Storage
+    whale.storage.sync.clear();
+
+    //Clear List
+    var url_list = document.getElementById("url_list");
+    while(url_list.firstChild){
+        url_list.removeChild(url_list.firstChild);
+    }
 }
 

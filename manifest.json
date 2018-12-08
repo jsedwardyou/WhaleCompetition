@@ -10,7 +10,7 @@
       "16": "page-16.png"
     }
   },
-  "permissions": ["tabs", "storage", "contextMenus"],
+  "permissions": ["tabs", "storage", "contextMenus", "webRequest", "webRequestBlocking", "http://*/*", "https://*/*"],
   "background": {
     "scripts": ["background.js"]
   }
