@@ -10,17 +10,25 @@ clear.onclick = function(){
 whale.storage.onChanged.addListener(function(changes){
     var url_list = document.getElementById('url_list');
     for(key in changes){
-        console.log(changes[key]);
         if(changes[key].newValue){
             create_url_li(changes[key].newValue, url_list);
             port.postMessage(changes[key].newValue + " true");
         }
-
     }
 });
 
+whale.runtime.onMessage.addListener(
+    function(request,sender,sendResponse){
+        if(request.msg == 'clear'){
+            clear_list();
+        }
+        else{
+            handle_checkbox_message(request.msg);
+        }
+    }
+);
+
 //Send info to background.js
-var selected = [];
 function checkbox_onChange(button){
     var message_to_send = "";
     if(button.checked == true){
@@ -84,6 +92,7 @@ function create_url_li(url, url_list){
   check_button.type = 'checkbox';
   check_button.id = url;
   check_button.checked = true;
+  check_button.name = url;
   check_button.onchange = function(){
     checkbox_onChange(check_button);
   };
@@ -105,4 +114,35 @@ function clear_list(){
     }
 }
 
+function handle_checkbox_message(message){
+    messages = message.split(" ");
+    var url_list = document.getElementById('url_list');
+    if(messages[1] == 'true'){
+        update_checkbox(messages[0], url_list, true);
+    }
+    else if(messages[1] == 'false'){
+        update_checkbox(messages[0], url_list, false);
+    }
+}
+
+function findURL(url, list){
+    var urls = list.getElementsByTagName('li');
+    for(var i = 0; i < urls.length; i++){
+        if(urls[i].innerText == url){
+            return urls[i];
+        }
+
+    }
+    return undefined;
+}
+
+function update_checkbox(url, url_list, bool){
+    var checkbox = findURL(url, url_list).lastChild;
+    checkbox.checked = bool;
+    checkbox.setAttribute('checked', checkbox.checked);
+    console.log(checkbox.checked);
+    //whale.runtime.sendMessage({
+    //    msg: url + " " + bool
+    //});
+}
 
