@@ -69,6 +69,11 @@ whale.runtime.onMessage.addListener({
 //-------------------handles changes in the tabs-----------------------------------------
 function current_url_update(){
     whale.tabs.query({'active': true, 'currentWindow': true}, function(tabs){
+        if(!tabs[0]){
+            current_url = undefined;
+            current_timer = undefined;
+            return;
+        }
         current_url = new URL(tabs[0].url).hostname;
         current_timer = findTimer(current_url, timer_list);
 
@@ -129,11 +134,17 @@ function findTimer(name, timer_list){
 setInterval(update, 1000);
 
 function update(){
-    console.log(timer_list[0].active);
     if(current_timer && current_timer.active){
         current_timer.time++;
         total_time++;
         console.log(total_time);
+        if(total_time == 5){
+            whale.sidebarAction.show({
+                url: whale.runtime.getURL('popup/warning1.html')
+            });
+        }
+
+
     }
 }
 
@@ -164,3 +175,17 @@ function add_url(info){
     });
 }
 
+whale.sidebarAction.onClicked.addListener(function(result){
+    if(result.closed){
+        whale.sidebarAction.hide();
+    }
+    else if(result.opened){
+        whale.sidebarAction.show({
+            url: whale.runtime.getURL('popup/popup.html')
+        },function(){
+            //Send Messages
+            whale.runtime.sendMessage({msg: "chart " + total_time + " " + current_timer.name
+            + " " + current_timer.time});
+        });
+    }
+});

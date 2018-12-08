@@ -19,8 +19,23 @@ whale.storage.onChanged.addListener(function(changes){
 
 whale.runtime.onMessage.addListener(
     function(request,sender,sendResponse){
+        var messages = request.msg.split(" ");
         if(request.msg == 'clear'){
             clear_list();
+        }
+        else if(messages[0] == "chart"){
+            for(var i = 0; i < labels.length; i++){
+                if(messages[2] == labels[i]){
+                    chart_data[i] = Number(messages[3]);
+                    draw_chart();
+                    return;
+                }
+            }
+            labels.push(messages[2]);
+            chart_data.push(Number(messages[3]));
+            draw_chart();
+            console.log(labels);
+            console.log(chart_data);
         }
         else{
             handle_checkbox_message(request.msg);
@@ -140,9 +155,27 @@ function update_checkbox(url, url_list, bool){
     var checkbox = findURL(url, url_list).lastChild;
     checkbox.checked = bool;
     checkbox.setAttribute('checked', checkbox.checked);
-    console.log(checkbox.checked);
-    //whale.runtime.sendMessage({
-    //    msg: url + " " + bool
-    //});
+}
+
+var labels = [];
+var chart_data = [];
+function draw_chart(){
+    new Chart(document.getElementById("pie-chart"), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Time (sec)",
+            backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
+            data: chart_data
+          }]
+        },
+        options: {
+          title: {
+            display: true,
+            text: '방해사이트'
+          }
+        }
+    });
 }
 
