@@ -1,10 +1,12 @@
 initialize();
 
+//Clear button
 var clear = document.getElementById("clear_list");
 clear.onclick = function(){
     clear_list();
 };
 
+//Storage update
 whale.storage.onChanged.addListener(function(changes){
     var url_list = document.getElementById('url_list');
     for(key in changes){
@@ -14,6 +16,19 @@ whale.storage.onChanged.addListener(function(changes){
     }
 });
 
+//Send info to background.js
+var selected = [];
+function checkbox_onChange(button){
+    var message_to_send = "";
+    if(button.checked == true){
+        message_to_send = (button.id + " true");
+    }else{
+        message_to_send = (button.id + " false");
+    }
+    port.postMessage(message_to_send);
+}
+
+var port;
 function initialize(){
     var clear_button = document.createElement('BUTTON');
     var t = document.createTextNode("Clear");
@@ -22,6 +37,11 @@ function initialize(){
     document.body.appendChild(clear_button);
 
     Display_URL();
+
+    //Setup port
+    port = chrome.extension.connect({
+        name: 'background'
+    });
 }
 
 function Display_URL(){
@@ -45,6 +65,7 @@ function Display_URL(){
             //If url_list does not have urls from storage, add each url to the list
             if(!has_url){
                 create_url_li(storage_url, url_list);
+                port.postMessage(storage_url + " true");
             }
 
         });
@@ -60,6 +81,9 @@ function create_url_li(url, url_list){
   check_button.type = 'checkbox';
   check_button.id = url;
   check_button.checked = true;
+  check_button.onchange = function(){
+    checkbox_onChange(check_button);
+  };
 
   //Add new Elements to the url_list
   node.appendChild(textnode);
