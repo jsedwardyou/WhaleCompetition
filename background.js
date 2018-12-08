@@ -4,8 +4,6 @@ whale.contextMenus.create({
     onclick: add_url
 });
 
-var index = 0;
-
 function add_url(info){
     //When onclick, retrieve hostname from url
     whale.tabs.getSelected(null, function(tab){
@@ -28,9 +26,8 @@ function add_url(info){
                 whale.storage.sync.set({[domain]: domain}, function(){
                     console.log("Value is set to "  + domain);
                 });
-                index++;
             }
+
         });
     });
-
 }
