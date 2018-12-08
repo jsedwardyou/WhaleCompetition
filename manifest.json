@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "TimeFairy",
-  "description": "TimeFairy",
+  "name": "Name_to_decide",
+  "description": "Naver Whale Extension App that will manage your internet time",
   "version": "1.0.0",
 
   "sidebar_action": {
@@ -10,7 +10,7 @@
       "16": "page-16.png"
     }
   },
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "contextMenus"],
   "background": {
     "scripts": ["background.js"]
   }
