@@ -11,8 +11,11 @@ whale.storage.onChanged.addListener(function(changes){
     var url_list = document.getElementById('url_list');
     for(key in changes){
         console.log(changes[key]);
-        if(changes[key].newValue)
+        if(changes[key].newValue){
             create_url_li(changes[key].newValue, url_list);
+            port.postMessage(changes[key].newValue + " true");
+        }
+
     }
 });
 
