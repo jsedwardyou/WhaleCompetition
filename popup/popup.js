@@ -2,11 +2,8 @@
 var clear = document.getElementById("clear_list");
 var start = document.getElementById('start');
 var port;
-var labels = [];
-var chart_data = [];
 
 initialize();
-
 
 //------------------------------------------------------------whale
 whale.storage.onChanged.addListener(function(changes){
@@ -24,8 +21,24 @@ whale.storage.onChanged.addListener(function(changes){
 whale.runtime.onMessage.addListener(
     function(request,sender,sendResponse){
         var messages = request.msg.split(" ");
+        var url_list = document.getElementById('url_list');
         console.log(messages);
         switch(messages[0]){
+            case 'initialize':
+                var timer_list = request.timer_list;
+                start.checked = request.start_state;
+                start.setAttribute('checked',start.checked);
+                for(var i = 0; i < timer_list.length; i++){
+                    var url = findURL(timer_list[i].name, url_list);
+                    if(!url){
+                        var node = create_url_li(timer_list[i].name, url_list);
+                        node.childNodes[1].checked = timer_list[i].active;
+                        node.childNodes[1].setAttribute('checked', node.childNodes[1].checked);
+                        node.childNodes[2].checked = timer_list[i].blocked;
+                        node.childNodes[2].setAttribute('checked', node.childNodes[2].checked);
+                    }
+                }
+            break;
             case 'start':
                 start.checked = true;
                 start.setAttribute('checked', true);
@@ -37,22 +50,22 @@ whale.runtime.onMessage.addListener(
             case 'clear':
                 clear_list();
             break;
-
-            case 'chart':
-                for(var i = 0; i < labels.length; i++){
-                    if(messages[2] == labels[i]){
-                        chart_data[i] = Number(messages[3]);
-                        draw_chart();
-                        return;
-                    }
-                }
-                labels.push(messages[2]);
-                chart_data.push(Number(messages[3]));
-                draw_chart();
-            break;
-
             case 'checkbox':
                 handle_checkbox_message(messages);
+            break;
+            case 'roll_back':
+                reload_page(request);
+            break;
+            case 'blocking':
+                var url = findURL(messages[1], url_list);
+                if(messages[2] == 'true'){
+                    url.childNodes[2].checked = true;
+                    url.childNodes[2].setAttribute('checked', url.childNodes[2].checked);
+                }
+                else if (messages[2] =='false'){
+                    url.childNodes[2].checked = false;
+                    url.childNodes[2].setAttribute('checked', url.childNodes[2].checked);
+                }
             break;
         }
     }
@@ -84,12 +97,12 @@ function checkbox_onChange(button){
 }
 
 function initialize(){
-    console.log(start.checked);
-    initialize_URL();
+    //initialize_URL();
     //Setup port
     port = chrome.extension.connect({
         name: 'background'
     });
+    port.postMessage('initialized');
 }
 
 function initialize_URL(){
@@ -121,6 +134,7 @@ function create_url_li(url, url_list){
   node.appendChild(warning_box);
   node.appendChild(blocking_box);
   url_list.appendChild(node);
+  return node;
 }
 
 function handle_checkbox_message(messages){
@@ -150,7 +164,13 @@ function update_checkbox(url, url_list, bool){
     checkbox.setAttribute('checked', checkbox.checked);
 }
 
-function draw_chart(){
+function draw_chart(messages){
+    var total_time = messages[1];
+    var labels = []; var chart_data= [];
+    for(var i = 2; i < messages.length; i = i+2){
+        labels.push(messages[i]);
+        chart_data.push(Number(messages[i+1]));
+    }
     new Chart(document.getElementById("pie-chart"), {
         type: 'pie',
         data: {
@@ -211,3 +231,34 @@ function clear_list(){
     }
 }
 
+function reload_page(request){
+    start.checked = request.start_state;
+    start.setAttribute('checked', start.checked);
+
+    var active_urls = request.active_urls;
+    var url_list = document.getElementById('url_list');
+    var urls = document.getElementsByTagName('li');
+    var active_urls = request.active_urls;
+    var blocked_urls = request.blocked_urls;
+    for(var i = 0; i < urls.length; i++){
+        urls[i].childNodes[1].checked = false;
+        urls[i].childNodes[1].setAttribute('checked', urls[i].childNodes[1].checked);
+        urls[i].childNodes[2].checked = false;
+        urls[i].childNodes[2].setAttribute('checked', urls[i].childNodes[2].checked);
+    }
+    for(var i = 0; i < active_urls.length; i++){
+        var url = findURL(active_urls[i], url_list);
+        if(url){
+            url.childNodes[1].checked = true;
+            url.setAttribute('checked', url.checked);
+        }
+    }
+    for(var i = 0; i < blocked_urls.length; i++){
+        var url = findURL(blocked_urls[i], url_list);
+        if(url){
+            url.childNodes[2].checked = true;
+            url.setAttribute('checked', url.checked);
+        }
+    }
+
+}

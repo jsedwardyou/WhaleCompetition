@@ -8,7 +8,8 @@
     "default_page": "popup/popup.html",
     "default_icon": {
       "16": "page-16.png"
-    }
+    },
+    "use_navigation_bar": false
   },
   "permissions": ["tabs", "storage", "contextMenus", "webRequest", "webRequestBlocking", "http://*/*", "https://*/*"],
   "background": {

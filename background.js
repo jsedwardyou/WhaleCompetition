@@ -12,12 +12,16 @@ var timer_list = [];
 var total_time = 0;
 var is_active = false;
 var blocked_urls = ["*://hello.com/*"];
+var blocked_urls_temp = [];
+var standard_time = 0;
+
 
 class Timer{
     constructor(name){
         this.name = name;
         this.time = 0;
         this.active = true;
+        this.blocked = false;
     }
 }
 
@@ -55,7 +59,6 @@ whale.storage.onChanged.addListener(function(changes){
 
 whale.runtime.onMessage.addListener({
     function(request,sender,sendResponse){
-        console.log(request.msg);
         var messages = request.msg.split(" ");
         for(var i = 0; i < timer_list.length; i++){
             if(messages[1] == timer_list[i].name){
@@ -75,29 +78,27 @@ whale.runtime.onConnect.addListener(port => {
     if(port.name == 'background'){
         port.onMessage.addListener(message => {
             console.log(message);
+            if(message == 'initialized'){
+                whale.runtime.sendMessage({msg: 'initialize',
+                    timer_list: timer_list,
+                    start_state: is_active
+                });
+            }
             handleStartBox(message);
             handleCheckBoxMessage(message);
         });
     }
 });
 
-whale.sidebarAction.onClicked.addListener(function(result){
-    if(result.closed){
+whale.sidebarAction.onClicked.addListener(result =>{
+    if(result.opened){
+        whale.sidebarAction.show({url: whale.runtime.getURL('popup/popup.html')});
+        roll_back();
+    }
+    else if(result.opened == false){
         whale.sidebarAction.hide();
     }
-    else if(result.opened){
-        whale.sidebarAction.show({
-            url: whale.runtime.getURL('popup/popup.html')
-        },function(){
-            //Send Messages
-            if(current_timer)
-                whale.runtime.sendMessage({msg: "chart " + total_time + " " + current_timer.name
-                + " " + current_timer.time});
-        });
-    }
 });
-
-
 
 //-------------------------------------------------------functions
 function current_url_update(){
@@ -135,7 +136,7 @@ function handleStartBox(message){
 
 function handleCheckBoxMessage(message){
     var messages = message.split(" ");
-
+    console.log(message);
     if(messages[0] == "blocking"){
         var blocked_url = "*://" + messages[1] + "/*";
         if(messages[2] == "true"){
@@ -143,16 +144,21 @@ function handleCheckBoxMessage(message){
             for(var i = 0; i < blocked_urls.length; i++){
                 if(blocked_urls[i] == blocked_url){
                     has_url = true;
+                    findTimer(messages[1], timer_list).blocked = true;
                 }
             }
             if(!has_url){
                 blocked_urls.push(blocked_url);
+                blocked_urls_temp.push(messages[1]);
+                findTimer(messages[1], timer_list).blocked = true;
             }
         }
         else if(messages[2] == "false"){
             for(var i = 0; i < blocked_urls.length; i++){
                 if(blocked_urls[i] == blocked_url){
                     blocked_urls.splice(i,1);
+                    blocked_urls_temp.splice(i-1,1);
+                    findTimer(messages[1], timer_list).blocked = false;
                 }
             }
         }
@@ -161,7 +167,7 @@ function handleCheckBoxMessage(message){
             {urls: blocked_urls},
             ["blocking"]
         );
-        console.log(blocked_urls);
+        whale.runtime.sendMessage({msg:message});
     }
     else if(messages[0] == "warning"){
         var timer = findTimer(messages[1], timer_list);
@@ -181,6 +187,7 @@ function handleCheckBoxMessage(message){
             current_timer = timer;
 
         whale.runtime.sendMessage({msg: message});
+        roll_back();
     }
 }
 
@@ -206,25 +213,29 @@ function update(){
         total_time++;
         console.log(total_time);
         pop_up(current_timer);
+        if(total_time > standard_time + 30){
+            standard_time = total_time;
+        }
     }
 }
 
 function pop_up(timer){
     var warning_htmls = [];
     switch(timer.time){
-        case 3:
+        case standard_time + 3:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
             break;
-        case 5:
+        case standard_time + 15:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
             break;
-        case 7:
+        case standard_time + 17:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
             break;
-        case 9:
-            whale.windows.create({url: whale.runtime.getURL('popup/warning_sidebar.html')});
+        case standard_time + 19:
+            whale.windows.create({url: whale.runtime.getURL('popup/warning_popup.html'), width: 720, height: 1280});
             break;
-        case 600:
+        case standard_time + 22:
+            whale.windows.create({url: whale.runtime.getURL('popup/blocking_popup.html'), width: 720, height: 1280});
         break;
     }
 }
@@ -273,3 +284,19 @@ function initialize(){
 function block(details){
     return {cancel: true};
 }
+
+function roll_back(){
+    var active_urls = [];
+    for(var i = 0; i < timer_list.length; i++){
+        if(timer_list[i].active){
+            active_urls.push(timer_list[i].name);
+        }
+    }
+    whale.runtime.sendMessage({
+        msg: "roll_back",
+        blocked_urls: blocked_urls_temp,
+        start_state: is_active,
+        active_urls: active_urls,
+    });
+}
+
