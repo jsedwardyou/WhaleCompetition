@@ -11,20 +11,25 @@ function add_url(info){
     whale.tabs.getSelected(null, function(tab){
         var url = new URL(tab.url);
         var domain = url.hostname;
-        var keyname = "URL"+index;
 
-        //Store URL.hostname into storage under key "URL#"
-        whale.storage.sync.set({[keyname]: domain}, function(){
-            console.log("Value is set to "  + keyname + " "+ domain);
-        });
-        index++;
-
+        //Check for duplicates
         whale.storage.sync.get(null, function(results){
+            var canStore = true;
             var allKeys = Object.keys(results);
-            console.log(results);
             allKeys.forEach(function(entry){
-                console.log(results[entry]);
+                if(results[entry] == domain){
+                    canStore = false;
+                    console.log("Duplicate exists");
+                }
             });
+
+            if(canStore){
+                //Store URL.hostname into storage under key "URL#"
+                whale.storage.sync.set({[domain]: domain}, function(){
+                    console.log("Value is set to "  + domain);
+                });
+                index++;
+            }
         });
     });
 
