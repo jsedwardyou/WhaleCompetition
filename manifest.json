@@ -7,9 +7,16 @@
   "sidebar_action": {
     "default_page": "popup/popup.html",
     "default_icon": {
-      "16": "page-16.png"
+      "16": "page-16.png",
+      "48": "page-16.png",
+      "128": "page-16.png"
     },
     "use_navigation_bar": false
+  },
+  "icons" : {
+    "16": "page-16.png",
+    "48": "page-16.png",
+    "128": "page-16.png"
   },
   "permissions": ["tabs", "storage", "contextMenus", "webRequest", "webRequestBlocking", "http://*/*", "https://*/*"],
   "background": {

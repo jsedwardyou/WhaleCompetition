@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link rel = "stylesheet" type = "text/css" href = "stylesheet.css">
     <script type = 'text/javascript' src = '../Chart.min.js'></script>
 </head>
-<body background = "../image/Nyang/2_1.png">
-    <input id = 'start' type = 'checkbox'>START</input>
+<body>
+    <div><img src = '../ui/title.png' height = '70px' width = '380px'></div>
+    <div class = "heading">
+        <img src = '../ui/start.png' height = '30px' width = '170px'>
+        <div class="onoffswitch">
+            <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" checked>
+            <label class="onoffswitch-label" for="myonoffswitch">
+                <span class="onoffswitch-inner"></span>
+                <span class="onoffswitch-switch"></span>
+            </label>
+        </div>
+    </div>
+    <div class = "heading"><img src = '../ui/distraction.png' height = '30px' width = '170px'></div>
     <ol id = 'url_list'></ol>
     <button id = 'clear_list'>Clear</button>
+    <div class = "heading"><img src = '../ui/statistics.png' height = '30px' width = '170px'></div>
     <canvas id="pie-chart" width="800" height="450"></canvas>
     <script src = "popup.js"></script>
 </body>

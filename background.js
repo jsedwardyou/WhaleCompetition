@@ -81,7 +81,8 @@ whale.runtime.onConnect.addListener(port => {
             if(message == 'initialized'){
                 whale.runtime.sendMessage({msg: 'initialize',
                     timer_list: timer_list,
-                    start_state: is_active
+                    start_state: is_active,
+                    total_time: total_time
                 });
             }
             handleStartBox(message);
@@ -93,7 +94,11 @@ whale.runtime.onConnect.addListener(port => {
 whale.sidebarAction.onClicked.addListener(result =>{
     if(result.opened){
         whale.sidebarAction.show({url: whale.runtime.getURL('popup/popup.html')});
-        roll_back();
+        whale.runtime.sendMessage({
+            msg: 'draw',
+            total_time: total_time,
+            timer_list: timer_list
+        });
     }
     else if(result.opened == false){
         whale.sidebarAction.hide();
@@ -212,30 +217,30 @@ function update(){
         current_timer.time++;
         total_time++;
         console.log(total_time);
-        pop_up(current_timer);
-        if(total_time > standard_time + 30){
+        pop_up(current_timer,current_url);
+        if(total_time > standard_time + 40){
             standard_time = total_time;
         }
     }
 }
 
-function pop_up(timer){
-    var warning_htmls = [];
+function pop_up(timer, current_url){
+    var previous_url = current_url;
     switch(timer.time){
-        case standard_time + 3:
+        case standard_time + 5:
+            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
+            break;
+        case standard_time + 10:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
             break;
         case standard_time + 15:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
             break;
-        case standard_time + 17:
-            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
-            break;
-        case standard_time + 19:
+        case standard_time + 20:
             whale.windows.create({url: whale.runtime.getURL('popup/warning_popup.html'), width: 720, height: 1280});
             break;
-        case standard_time + 22:
-            whale.windows.create({url: whale.runtime.getURL('popup/blocking_popup.html'), width: 720, height: 1280});
+        case standard_time + 25:
+            whale.windows.create({url: whale.runtime.getURL('popup/blocking_popup.html'), width: 720, height: 700});
         break;
     }
 }
