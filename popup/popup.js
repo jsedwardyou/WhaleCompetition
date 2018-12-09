@@ -2,32 +2,19 @@
 var clear = document.getElementById("clear_list");
 var start = document.getElementById('myonoffswitch');
 var port;
-var pie_chart;
+var pie_chart; var pie_chart_total;
 var labels; var chart_data;
 
 initialize();
 
 //------------------------------------------------------------whale
-whale.storage.onChanged.addListener(function(changes){
-    var url_list = document.getElementById('url_list');
-
-    //---------------------------Add new url to the list
-    for(key in changes){
-        if(changes[key].newValue){
-            create_url_li(changes[key].newValue, url_list);
-            port.postMessage("warning " + changes[key].newValue + " true");
-        }
-    }
-});
-
 whale.runtime.onMessage.addListener(
     function(request,sender,sendResponse){
-        var messages = request.msg.split(" ");
         var url_list = document.getElementById('url_list');
-        console.log(messages);
         if(request.msg == 'draw'){
             var timer_list = request.timer_list;
             var total_time = request.total_time;
+
             for(var i = 0; i < timer_list.length; i++){
                 if(!labels.includes(timer_list[i].name)){
                     labels.push(timer_list[i].name);
@@ -35,60 +22,39 @@ whale.runtime.onMessage.addListener(
                 }
                 else{
                     var found = labels.indexOf(timer_list[i].name);
-                    console.log(found);
                     chart_data[found] = timer_list[i].time;
                 }
-
             }
             pie_chart.update();
         }
-        switch(messages[0]){
-            case 'initialize':
-                pie_chart = draw_chart(request.total_time,request.timer_list);
-                var timer_list = request.timer_list;
-                start.checked = request.start_state;
-                start.setAttribute('checked',start.checked);
-                for(var i = 0; i < timer_list.length; i++){
-                    var url = findURL(timer_list[i].name, url_list);
-                    if(!url){
-                        var node = create_url_li(timer_list[i].name, url_list);
-                        node.childNodes[1].checked = timer_list[i].active;
-                        node.childNodes[1].setAttribute('checked', node.childNodes[1].checked);
-                        node.childNodes[0].checked = timer_list[i].blocked;
-                        node.childNodes[0].setAttribute('checked', node.childNodes[2].checked);
-                    }
+        else if(request.msg == 'initialize'){
+            console.log("Initialize");
+            //Create urls
+            var timer_list = request.timer_list;
+            console.log(timer_list.length);
+            for(var i = 0; i < timer_list.length; i++){
+                var url = findURL(timer_list[i].name, url_list);
+                console.log(url);
+                var node;
+                if(!url){
+                    node = create_url_li(timer_list[i].name, url_list);
                 }
-            break;
-            case 'start':
-                start.checked = true;
-                start.setAttribute('checked', true);
-            break;
-            case 'stop':
-                start.checked = false;
-                start.setAttribute('checked', false);
-            break;
-            case 'clear':
-                clear_list();
-            break;
-            case 'checkbox':
-                handle_checkbox_message(messages);
-            break;
-            case 'roll_back':
-                reload_page(request);
-            break;
-            case 'blocking':
-                var url = findURL(messages[1], url_list);
-                if(messages[2] == 'true'){
-                    url.childNodes[0].checked = true;
-                    url.childNodes[0].setAttribute('checked', url.childNodes[0].checked);
+                else{
+                    node = url;
                 }
-                else if (messages[2] =='false'){
-                    url.childNodes[0].checked = false;
-                    url.childNodes[0].setAttribute('checked', url.childNodes[0].checked);
-                }
-            break;
-
+                node.childNodes[1].checked = timer_list[i].active;
+                node.childNodes[1].setAttribute('checked', node.childNodes[1].checked);
+                node.childNodes[0].checked = timer_list[i].blocked;
+                node.childNodes[0].setAttribute('checked', node.childNodes[0].checked);
+            }
+            //Sync Buttons
+            start.checked = request.start_state;
+            start.setAttribute('checked', start.checked);
+            //Draw Chart
+            pie_chart = draw_chart(request.total_time, request.timer_list);
         }
+        else if(request.msg == 'checkbox') handle_checkbox_message(request);
+        else if(request.msg == 'clear') clear_list();
     }
 );
 
@@ -98,48 +64,20 @@ clear.onclick = function(){
 };
 
 start.onchange = function(){
-    if(start.checked == true){
-        port.postMessage("start");
-    }
-    else{
-        port.postMessage("stop");
-    }
+    port.postMessage({msg: 'checkbox', id: 'start_box', state: start.checked});
 };
 
 //------------------------------------------------------------function
-function checkbox_onChange(button){
-    var message_to_send = "";
-    if(button.checked == true){
-        message_to_send = (button.id + " true");
-    }else{
-        message_to_send = (button.id + " false");
-    }
-    port.postMessage(message_to_send);
+function checkbox_onChange(checkbox){
+    port.postMessage({msg: 'checkbox', id: checkbox.id , state: checkbox.checked});
 }
 
 function initialize(){
-    //initialize_URL();
     //Setup port
     port = chrome.extension.connect({
         name: 'background'
     });
     port.postMessage('initialized');
-}
-
-function initialize_URL(){
-    var url_list = document.getElementById('url_list');
-
-    //Check if url_list already has elements
-    var urls = url_list.getElementsByTagName('li');
-
-    whale.storage.sync.get(null, function(storage_urls){
-        var allKeys = Object.keys(storage_urls);
-        allKeys.forEach(function(entry){
-            var url = storage_urls[entry];
-            create_url_li(url, url_list);
-            port.postMessage("warning " + url + " true");
-        });
-    });
 }
 
 function create_url_li(url, url_list){
@@ -159,14 +97,28 @@ function create_url_li(url, url_list){
   return node;
 }
 
-function handle_checkbox_message(messages){
-    var url_list = document.getElementById('url_list');
-    if(messages[2] == 'true'){
-        update_checkbox(messages[1], url_list, true);
+function handle_checkbox_message(request){
+
+    if(request.id == 'start_box'){
+        start.checked = request.state;
+        start.setAttribute('checked', start.checked);
+        return;
     }
-    else if(messages[2] == 'false'){
-        update_checkbox(messages[1], url_list, false);
+    var temp = request.id.split(" ");
+    var checkbox_type = temp[0];
+    var checkbox_name = temp[1];
+    var checkbox_state = request.state;
+
+    var url = findURL(checkbox_name, url_list);
+    if(checkbox_type == 'warning'){
+        url.childNodes[1].checked = checkbox_state;
+        url.setAttribute('checked', url.childNodes[1].checked);
     }
+    else if(checkbox_type == 'blocking'){
+        url.childNodes[0].checked = checkbox_state;
+        url.setAttribute('checked', url.childNodes[0].checked);
+    }
+    return;
 }
 
 function findURL(url, list){
@@ -188,8 +140,10 @@ function update_checkbox(url, url_list, bool){
 
 function draw_chart(total_time, timer_list){
     var chart;
-    labels = []; chart_data = [];
+    labels = []; chart_data = []; var colors = [];
     for(var i = 0; i < timer_list.length; i++){
+        var new_color = getRandomColor();
+        colors.push(new_color);
         if(timer_list[i].time > 0){
             labels.push(timer_list[i].name);
             chart_data.push(timer_list[i].time);
@@ -201,7 +155,7 @@ function draw_chart(total_time, timer_list){
           labels: labels,
           datasets: [{
             label: "Time (sec)",
-            backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
+            backgroundColor: colors,
             data: chart_data
           }]
         },
@@ -209,6 +163,37 @@ function draw_chart(total_time, timer_list){
           title: {
             display: true,
             text: '방해사이트'
+          }
+        }
+    });
+    return chart;
+}
+
+function draw_chart_total(total_time, time_list){
+    var chart;
+    labels = ["productive"]; chart_data = [total_time]; var colors = ["#ff0000"];
+    for(var i = 0; i < timer_list.length; i++){
+        var new_color = getRandomColor();
+        colors.push(new_color);
+        if(timer_list[i].time > 0){
+            labels.push(timer_list[i].name);
+            chart_data.push(timer_list[i].time);
+        }
+    }
+    chart = new Chart(document.getElementById("pie-chart"), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Time (sec)",
+            backgroundColor: colors,
+            data: chart_data
+          }]
+        },
+        options: {
+          title: {
+            display: true,
+            text: '전체 사용 시간'
           }
         }
     });
@@ -292,3 +277,12 @@ document.addEventListener('visibilitychange',function(){
         console.log('visible');
     }
 });
+
+function getRandomColor() {
+  var letters = '0123456789abcdef';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}

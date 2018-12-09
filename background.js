@@ -5,6 +5,8 @@ whale.contextMenus.create({
     onclick: add_url
 });
 
+whale.sidebarAction.setTitle({title: "nyangcus"});
+
 //----------------Variables----------------
 var current_url;
 var current_timer;
@@ -12,7 +14,6 @@ var timer_list = [];
 var total_time = 0;
 var is_active = false;
 var blocked_urls = ["*://hello.com/*"];
-var blocked_urls_temp = [];
 var standard_time = 0;
 
 
@@ -85,7 +86,6 @@ whale.runtime.onConnect.addListener(port => {
                     total_time: total_time
                 });
             }
-            handleStartBox(message);
             handleCheckBoxMessage(message);
         });
     }
@@ -120,51 +120,36 @@ function current_url_update(){
     });
 }
 
-function handleStartBox(message){
-    if(message == "start"){
-        is_active = true;
-        whale.tabs.query({'active': true, 'currentWindow': true}, function(tabs){
-            if(!tabs[0]) return;
-            current_url = new URL(tabs[0].url).hostname;
-            current_timer = findTimer(current_url, timer_list);
-        });
-        whale.runtime.sendMessage({msg: "start"});
-    }
-    else if(message == "stop"){
-        is_active = false;
-        current_url = undefined;
-        current_timer = undefined;
-        whale.runtime.sendMessage({msg: "stop"});
-    }
-
-}
-
 function handleCheckBoxMessage(message){
-    var messages = message.split(" ");
     console.log(message);
-    if(messages[0] == "blocking"){
-        var blocked_url = "*://" + messages[1] + "/*";
-        if(messages[2] == "true"){
-            var has_url = false;
-            for(var i = 0; i < blocked_urls.length; i++){
-                if(blocked_urls[i] == blocked_url){
-                    has_url = true;
-                    findTimer(messages[1], timer_list).blocked = true;
-                }
-            }
-            if(!has_url){
+    if(message.msg != 'checkbox') return;
+
+    if(message.id == 'start_box'){
+        is_active = message.state;
+        whale.runtime.sendMessage(message);
+        return;
+    }
+
+    var temp = message.id.split(" ");
+    var checkbox_type = temp[0];
+    var checkbox_name = temp[1];
+
+    var checkbox_state = message.state;
+
+    var timer = findTimer(checkbox_name, timer_list);
+    if(timer == undefined){ console.log("WARNING: no such value"); return; }
+
+    if(checkbox_type == "warning"){
+        timer.active = checkbox_state;
+    }
+    else if(checkbox_type == "blocking"){
+        timer.blocked = checkbox_state;
+
+        var blocked_urls = [];
+        for(var i = 0; i < timer_list.length; i++){
+            if(timer_list[i].blocked){
+                var blocked_url = "*://" + timer_list[i].name + "/*";
                 blocked_urls.push(blocked_url);
-                blocked_urls_temp.push(messages[1]);
-                findTimer(messages[1], timer_list).blocked = true;
-            }
-        }
-        else if(messages[2] == "false"){
-            for(var i = 0; i < blocked_urls.length; i++){
-                if(blocked_urls[i] == blocked_url){
-                    blocked_urls.splice(i,1);
-                    blocked_urls_temp.splice(i-1,1);
-                    findTimer(messages[1], timer_list).blocked = false;
-                }
             }
         }
         whale.webRequest.onBeforeRequest.removeListener(block);
@@ -172,32 +157,11 @@ function handleCheckBoxMessage(message){
             {urls: blocked_urls},
             ["blocking"]
         );
-        whale.runtime.sendMessage({msg:message});
     }
-    else if(messages[0] == "warning"){
-        var timer = findTimer(messages[1], timer_list);
-        if(timer == undefined){
-            var new_timer = new Timer(messages[1]);
-            timer_list.push(new_timer);
-            timer = new_timer;
-        }
-
-        if(messages[2] == 'true'){
-            timer.active = true;
-        }
-        else if(messages[2] == 'false'){
-            timer.active = false;
-        }
-        if(current_url == messages[1])
-            current_timer = timer;
-
-        whale.runtime.sendMessage({msg: message});
-        roll_back();
-    }
+    whale.runtime.sendMessage(message);
 }
 
 function clear(){
-    active_list = [];
     timer_list = [];
     total_time = 0;
     current_timer = undefined;
@@ -218,36 +182,36 @@ function update(){
         total_time++;
         console.log(total_time);
         pop_up(current_timer,current_url);
-        if(total_time > standard_time + 40){
+        if(total_time > standard_time + 1800){
             standard_time = total_time;
         }
     }
 }
 
-function pop_up(timer, current_url){
-    var previous_url = current_url;
+function pop_up(timer){
     switch(timer.time){
-        case standard_time + 5:
-            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
-            break;
-        case standard_time + 10:
-            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
-            break;
         case standard_time + 15:
-            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html')});
+            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html'), reload: true});
             break;
-        case standard_time + 20:
-            whale.windows.create({url: whale.runtime.getURL('popup/warning_popup.html'), width: 720, height: 1280});
+        case standard_time + 30:
+            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html'), reload: true});
             break;
-        case standard_time + 25:
+        case standard_time + 45:
+            whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html'), reload: true});
+            break;
+        case standard_time + 300:
+            whale.windows.create({url: whale.runtime.getURL('popup/warning_popup.html'), width: 780, height: 650});
+            break;
+        case standard_time + 600:
             whale.windows.create({url: whale.runtime.getURL('popup/blocking_popup.html'), width: 720, height: 700});
+            handleCheckBoxMessage({msg: "checkbox", id: "blocking " + timer.name, state: true});
         break;
     }
 }
 
 function add_url(info){
     //When onclick, retrieve hostname from url
-    whale.tabs.query({'active': true}, function(tabs){
+    whale.tabs.query({'active': true, 'currentWindow': true}, function(tabs){
         var domain = new URL(tabs[0].url).hostname;
 
         //Check for duplicates
@@ -258,17 +222,22 @@ function add_url(info){
                 if(results[entry] == domain){
                     canStore = false;
                     console.log("Duplicate exists");
+                    canSore = false;
+                    return;
                 }
             });
-
+            //Store URL.hostname into storage under key "URL#"
             if(canStore){
-                //Store URL.hostname into storage under key "URL#"
                 whale.storage.sync.set({[domain]: domain}, function(){
                     console.log("Value is set to "  + domain);
                 });
             }
         });
         current_url = domain;
+        new_timer = new Timer(current_url);
+        timer_list.push(new_timer);
+        current_timer = new_timer;
+        update_view();
     });
 }
 
@@ -286,22 +255,16 @@ function initialize(){
     console.log(timer_list);
 }
 
+function update_view(){
+    //Send message to popup.js to update
+    console.log(timer_list);
+    console.log(timer_list.length);
+    console.log(timer_list[timer_list.length-1]);
+    whale.runtime.sendMessage({msg: "initialize", timer_list: timer_list, start_state: is_active, total_time: total_time});
+}
+
 function block(details){
     return {cancel: true};
 }
 
-function roll_back(){
-    var active_urls = [];
-    for(var i = 0; i < timer_list.length; i++){
-        if(timer_list[i].active){
-            active_urls.push(timer_list[i].name);
-        }
-    }
-    whale.runtime.sendMessage({
-        msg: "roll_back",
-        blocked_urls: blocked_urls_temp,
-        start_state: is_active,
-        active_urls: active_urls,
-    });
-}
 

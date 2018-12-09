@@ -23,9 +23,6 @@ exit.id = "exit";
 var exit_text = document.createTextNode("종료하기");
 exit.appendChild(exit_text);
 
-document.body.appendChild(block);
-document.body.appendChild(exit);
-
 block.onclick = function(){
     console.log(previous_url);
     whale.runtime.sendMessage({
