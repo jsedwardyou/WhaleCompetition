@@ -1,11 +1,11 @@
 //Content menu (Right Click) for adding url
 whale.contextMenus.create({
-    title: "URL 추가하기",
+    title: "방해사이트 추가하기",
     contexts: ['all'],
     onclick: add_url
 });
 
-whale.sidebarAction.setTitle({title: "nyangcus"});
+whale.sidebarAction.setTitle({title: "집중하라냥"});
 
 //----------------Variables----------------
 var current_url;
@@ -118,6 +118,8 @@ function current_url_update(){
 
         if(current_timer == undefined) return;
     });
+
+    whale.runtime.sendMessage({msg: 'draw', timer_list: timer_list, total_time: total_time});
 }
 
 function handleCheckBoxMessage(message){
@@ -145,13 +147,14 @@ function handleCheckBoxMessage(message){
     else if(checkbox_type == "blocking"){
         timer.blocked = checkbox_state;
 
-        var blocked_urls = [];
+        var blocked_urls = ["*://hello.com/*"];
         for(var i = 0; i < timer_list.length; i++){
             if(timer_list[i].blocked){
                 var blocked_url = "*://" + timer_list[i].name + "/*";
                 blocked_urls.push(blocked_url);
             }
         }
+        console.log(blocked_urls);
         whale.webRequest.onBeforeRequest.removeListener(block);
         whale.webRequest.onBeforeRequest.addListener(block,
             {urls: blocked_urls},
@@ -161,11 +164,21 @@ function handleCheckBoxMessage(message){
     whale.runtime.sendMessage(message);
 }
 
+function unblock_all(){
+    var blocked_urls = ["*://hello.com/*"];
+    whale.webRequest.onBeforeRequest.removeListener(block);
+    whale.webRequest.onBeforeRequest.addListener(block,
+        {urls: blocked_urls},
+        ["blocking"]
+    );
+}
+
 function clear(){
     timer_list = [];
     total_time = 0;
     current_timer = undefined;
     blocked_urls = ["*://hello.com/*"];
+    unblock_all();
 }
 
 function findTimer(name, timer_list){
@@ -189,7 +202,7 @@ function update(){
 }
 
 function pop_up(timer){
-    switch(timer.time){
+    switch(timer.time + standard_time){
         case standard_time + 15:
             whale.sidebarAction.show({url: whale.runtime.getURL('popup/warning_sidebar.html'), reload: true});
             break;

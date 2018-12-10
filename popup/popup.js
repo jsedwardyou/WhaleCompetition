@@ -156,6 +156,8 @@ function draw_chart(total_time, timer_list){
           datasets: [{
             label: "Time (sec)",
             backgroundColor: colors,
+            hoverBackgroundColor: colors,
+            hoverBorderColor: "rgb(255,255,0,0.75)",
             data: chart_data
           }]
         },
@@ -163,6 +165,49 @@ function draw_chart(total_time, timer_list){
           title: {
             display: true,
             text: '방해사이트'
+          },
+          tooltips:{
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                title: function(tooltipItems, data){
+                    return data.labels[tooltipItems[0].index];
+                },
+                label: function(tooltipItems, data){
+                    var data_time = data.datasets[0].data[tooltipItems.index];
+                    var time = new Array(3);
+                    for(var i = 0; i < time.length; i++){
+                        time[i] = 0;
+                    }
+                    time[0] = data_time;
+                    for(var i = 0; i < time.length-1; i++){
+                        while(time[i] > 60){
+                            time[i] -= 60;
+                            time[i+1] += 1;
+                        }
+                    }
+                    var display_time = "";
+                    if(time[2] != 0){
+                        display_time += time[2] + "시간";
+                    }
+                    if(time[1] != 0){
+                        display_time += time[1] + "분";
+                    }
+                    display_time += time[0] + "초";
+
+                    return display_time;
+                },
+                labelColor: function(tooltipItem, chart) {
+                    var display_color = ''
+                    display_color = chart.legend.legendItems[tooltipItem.index].fillStyle;
+                    display_color = display_color.substring(0,7);
+                    console.log(tooltipItem);
+                    return {
+                        borderColor: display_color,
+                        backgroundColor: display_color
+                    };
+                }
+            }
           }
         }
     });
@@ -241,37 +286,6 @@ function clear_list(){
     }
 }
 
-function reload_page(request){
-    start.checked = request.start_state;
-    start.setAttribute('checked', start.checked);
-
-    var active_urls = request.active_urls;
-    var url_list = document.getElementById('url_list');
-    var urls = document.getElementsByTagName('li');
-    var active_urls = request.active_urls;
-    var blocked_urls = request.blocked_urls;
-    for(var i = 0; i < urls.length; i++){
-        urls[i].childNodes[1].checked = false;
-        urls[i].childNodes[1].setAttribute('checked', urls[i].childNodes[1].checked);
-        urls[i].childNodes[0].checked = false;
-        urls[i].childNodes[0].setAttribute('checked', urls[i].childNodes[2].checked);
-    }
-    for(var i = 0; i < active_urls.length; i++){
-        var url = findURL(active_urls[i], url_list);
-        if(url){
-            url.childNodes[1].checked = true;
-            url.setAttribute('checked', url.checked);
-        }
-    }
-    for(var i = 0; i < blocked_urls.length; i++){
-        var url = findURL(blocked_urls[i], url_list);
-        if(url){
-            url.childNodes[0].checked = true;
-            url.setAttribute('checked', url.checked);
-        }
-    }
-}
-
 document.addEventListener('visibilitychange',function(){
     if(document.visibilityState === 'visible'){
         console.log('visible');
@@ -284,5 +298,6 @@ function getRandomColor() {
   for (var i = 0; i < 6; i++) {
     color += letters[Math.floor(Math.random() * 16)];
   }
+  color += '55';
   return color;
 }

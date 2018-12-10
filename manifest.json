@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "nyangcus",
-  "description": "Naver Whale Extension App that will manage your internet time",
-  "version": "1.0.0",
+  "name": "집중하라냥",
+  "description": "당신의 딴짓을 철저히 막아줄 귀여운 사이드바 서비스!",
+  "version": "1.0.3",
 
   "sidebar_action": {
     "default_page": "popup/popup.html",
