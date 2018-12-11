@@ -280,4 +280,9 @@ function block(details){
     return {cancel: true};
 }
 
+chrome.tabs.executeScript({
+    file: 'content/content.js'
 
+}, function(){
+console.log("Execute!");
+});

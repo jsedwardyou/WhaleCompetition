@@ -1,9 +1,165 @@
 body{
-    background-image: url("../ui/background.png");
-    background-repeat: no-repeat;
-    background-size: 400px 1000px;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    background-color: #e6e1e1;
+}
+
+ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 15px;
+}
+
+li{
+    font-family: corbel;
+    color: #3d3d3d;
+    margin-top: 10px;
 
 }
+
+li::before{
+    content: "■"; font-family:"Arial Black"; color: gray;
+    margin-right: 10px;
+}
+
+div.subtitle{
+    background-color: #f7f6f6;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 10px;
+    width: 99%;
+    height: 30px;
+    border-color: #a4a4a433;
+    border-style: groove;
+}
+
+p.subtitle_text{
+    font-family: hand-font;
+    font-size: 15px;
+    padding: 5px;
+    margin-left: 10px;
+    margin-right: 0;
+    color: #424242;
+    margin-top: 0px;
+    margin-bottom:0px;
+    width: 30vw;
+    display:inline-block;
+    color: #424242;
+}
+#description{
+    font-family: hand-font;
+    font-size: 15px;
+    padding: 5px;
+    margin-top: 0px;
+    margin-left: 43.5vw;
+    margin-right: 10vw;
+    display: inline-block;
+}
+
+#body-container{
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Top Section of the popup.html */
+div.header{
+    display: block;
+    width: 100%;
+    height: 70px;
+}
+
+/* Middle Section of the popup.html */
+div.content{
+    position: relative;
+    margin: 0 auto;
+    display:inline-block;
+    width: 100vw;
+    height: 70%;
+    white-space: nowrap;
+
+}
+
+    /* Start Button */
+div.start{
+    margin-top: 0;
+    margin-bottom: 5px;
+    display: block;
+    height: 95px;
+    white-space: nowrap;
+    padding: 0px;
+    top: 0;
+
+}
+
+#start_button_image{
+    height: 30px;
+    width: 170px;
+}
+
+    /* URL list */
+div.distraction{
+    margin-top: 10px;
+    margin-bottom: 5px;
+    display:block;
+    height: 20%;
+}
+
+#url_container{
+    display:block;
+    width: 100%;
+    height: 60%;
+    overflow-y: scroll;
+}
+
+#url_list{
+    padding-right: 15px;
+    padding-left: 15px;
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+
+    /* Chart */
+div.chart{
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    height:45%;
+}
+div.chart-container{
+    position:relative;
+    margin: auto;
+    margin-top: 25px;
+    width: 50%;
+    height: 80%;
+}
+
+
+/* Bottom Section of the popup.html */
+div.footer{
+    display: block;
+    top: 100%;
+    bottom:0;
+    width: 331.5px;
+    height: 170.5px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+
+div.wrapper{
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+
+
 
 input.apple-switch {
   position: relative;
@@ -15,6 +171,8 @@ input.apple-switch {
   border: 1px solid #D9DADC;
   border-radius: 25px;
   box-shadow: inset -10px 0 0 0 #fff;
+  vertical-align: bottom;
+  float: right;
 }
 
 input.apple-switch:after {
@@ -37,14 +195,6 @@ input.apple-switch:checked {
 input.apple-switch:checked:after {
   left: 10px;
   box-shadow: -2px 4px 3px rgba(0,0,0,0.05);
-}
-
-div.heading{
-    margin: 10px;
-    display: block;
-}
-div{
-    display:inline-block;
 }
 
 .onoffswitch {
@@ -93,4 +243,105 @@ div{
     right: 0px;
 }
 
+/* Font */
+@font-face{
+    font-family: hand-font;
+    src: url(../font/Together-KwonJungae.otf);
+}
 
+@font-face{
+    font-family: url-font;
+    src: url(../font/NanumBarunGothic.otf);
+}
+
+/* warning / block button */
+label.container {
+  display: inline-block;
+  position: relative;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  float: right;
+  margin-right: 10px;
+}
+
+/* Hide the browser's default checkbox */
+.container input {
+display:none;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 75%;
+  width: 75%;
+  background-color: #eee00000;
+  border-radius: 35%;
+  border-style: solid;
+  border-color: #a4a4a455;
+}
+
+/* On mouse-over, add a grey background color */
+.container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.warning:checked ~ .checkmark {
+  background-color: #d6bdc1;
+}
+
+.blocking:checked ~ .checkmark{
+    background-color: #ddb5c4;
+}
+
+
+/* start button */
+input[type=checkbox]{
+    display: none;
+}
+.check{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: inline-block;
+    position:absolute;
+}
+.start_box{
+    display: inline-block;
+    position: absolute;
+    width:  85px;
+    height: 40px;
+    background: url("../ui/start_off.png") no-repeat top left;
+    background-size: cover;
+    margin-left: 40vw;
+}
+.check input[type=checkbox]:checked + .start_box{
+    background: url("../ui/start_on.png") no-repeat top left;
+    background-size: cover;
+}
+
+/* clear button */
+#clear_list {
+    background: url("../ui/clear.png") no-repeat;
+    display: inline-block;
+    position: absolute;
+    width: 55px;
+    height: 24px;
+    background-size: cover;
+    border: none;
+    padding: 0;
+    margin-left: 81.5vw;
+    margin-bottom: 0 px;
+}
+
+#clear_container{
+    display:block;
+    width: 100%;
+    height: 25px;
+}

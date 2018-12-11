@@ -2,28 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name = "viewport" content = "width = device-width, height = device-height, initial-scale =1">
     <title>Title</title>
     <link rel = "stylesheet" type = "text/css" href = "stylesheet.css">
     <script type = 'text/javascript' src = '../Chart.min.js'></script>
 </head>
 <body>
-    <div><img src = '../ui/title.png' height = '96px' width = '390px'></div>
-    <div class = "heading">
-        <img src = '../ui/start.png' height = '30px' width = '170px'>
-        <div class="onoffswitch">
-            <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" checked>
-            <label class="onoffswitch-label" for="myonoffswitch">
-                <span class="onoffswitch-inner"></span>
-                <span class="onoffswitch-switch"></span>
-            </label>
+    <div id = "body-container">
+        <div class = "header">
+            <img id = "title" src = '../ui/title.png' height = '70px' width = '390px'>
         </div>
+        <div class = "content">
+            <div class = "start">
+                <div class = "subtitle"><p class = "subtitle_text"> 집중 시작하기 </p></div>
+                <div class="check">
+                    <input id="start_switch" type="checkbox">
+                    <label class = "start_box" for="start_switch"></label>
+                </div>
+            </div>
+            <div class = "distraction">
+                <div class = "subtitle"><p class = "subtitle_text">방해 사이트</p><p id = "description">경고 / 차단</p></div>
+                <div id = "url_container">
+                    <ul id = 'url_list'></ul>
+                </div>
+
+            </div>
+            <div id = "clear_container">
+                <button id = 'clear_list'></button>
+            </div>
+            <div class = chart>
+                <div class = "subtitle"><p class = "subtitle_text">통계</p></div>
+                <div class = "chart-container">
+                    <canvas id="pie-chart" width = "500" height = "500"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class = "footer">
+            <img src = '../ui/cats.png'width = "331.5px" height = "170.5px">
+        </div>
+        <script src = "popup.js" ></script>
     </div>
-    <div class = "heading"><img src = '../ui/distraction.png' height = '30px' width = '170px'></div>
-    <ol id = 'url_list'></ol>
-    <button id = 'clear_list'>Clear</button>
-    <div class = "heading"><img src = '../ui/statistics.png' height = '30px' width = '170px'></div>
-    <canvas id="pie-chart" width="800" height="700"></canvas>
-    <img src = '../ui/cats.png' height = '300px 'width = '300px'align = "middle" style= "margin: 30px">
-    <script src = "popup.js"></script>
 </body>
 </html>
